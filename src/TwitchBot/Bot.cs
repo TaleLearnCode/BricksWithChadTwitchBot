@@ -2,6 +2,7 @@
 using TwitchLib.Client;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
+using TwitchLib.Communication.Events;
 
 namespace TwitchBot
 {
@@ -14,7 +15,8 @@ namespace TwitchBot
 		TwitchClient twitchClient = new TwitchClient();
 
 		int _BricksDroped = 0;
-
+		int _Oofs = 0;
+		private string _StreamKey;
 
 		internal void Connect(bool logEvents)
 		{
@@ -25,14 +27,21 @@ namespace TwitchBot
 				twitchClient.OnLog += TwitchClient_OnLog;
 
 			twitchClient.OnConnected += TwitchClient_OnConnected;
-			twitchClient.OnMessageReceived += TwitchClient_OnMessageReceived;
 			twitchClient.OnChatCommandReceived += TwitchClient_OnChatCommandReceived;
+			twitchClient.OnDisconnected += TwitchClient_OnDisconnected;
 
 			twitchClient.Connect();
 
 		}
 
-		internal void Discconect()
+		private void TwitchClient_OnDisconnected(object sender, OnDisconnectedEventArgs e)
+		{
+			Console.ForegroundColor = ConsoleColor.Red;
+			Console.WriteLine("Bot Disconnected");
+			Console.ForegroundColor = ConsoleColor.White;
+		}
+
+		internal void Disconnect()
 		{
 			twitchClient.Disconnect();
 		}
@@ -44,42 +53,71 @@ namespace TwitchBot
 
 		private void TwitchClient_OnConnected(object sender, OnConnectedArgs e)
 		{
-			Console.WriteLine("[Bot]: Connected");
-		}
-
-		private void TwitchClient_OnMessageReceived(object sender, OnMessageReceivedArgs e)
-		{
-			Console.WriteLine($"[{e.ChatMessage.DisplayName}]: {e.ChatMessage.Message}");
+			Console.ForegroundColor = ConsoleColor.Green;
+			Console.WriteLine("Bot Connected");
+			Console.ForegroundColor = ConsoleColor.White;
 		}
 
 		private void TwitchClient_OnChatCommandReceived(object sender, OnChatCommandReceivedArgs e)
 		{
 
+			var mostRecentStreamKey = StreamSnapshot.GetMostRecentStreamId("TaleLearnCode");
+			if (mostRecentStreamKey != _StreamKey)
+			{
+				_StreamKey = mostRecentStreamKey;
+				_BricksDroped = 0;
+				_Oofs = 0;
+			}
+
 			switch (e.Command.CommandText.ToLower())
 			{
 				case "dropbrick":
-					if (e.Command.ChatMessage.IsBroadcaster)
-					{
-						if (e.Command.ArgumentsAsList.Count > 0)
-						{
-							if (int.TryParse(e.Command.ArgumentsAsList[0], out var numberOfBricksDropped))
-								_BricksDroped += numberOfBricksDropped;
-							else if (e.Command.ArgumentsAsList[0].ToLower() == "init")
-								_BricksDroped = 0;
-						}
-						else
-							_BricksDroped++;
-					}
-
-					twitchClient.SendMessage(Settings.ChannelName, $"Chad has dropped {_BricksDroped} bricks so far this stream.");
+					DropBrick(e);
+					break;
+				case "oof":
+					Oof(e);
+					break;
+				case "stats":
+					Stats();
 					break;
 			}
 
-			//Console.WriteLine($"[CommandText]: {e.Command.CommandText}");
-			//Console.WriteLine($"[CommandIdentifier]: {e.Command.CommandIdentifier}");
-			//Console.WriteLine($"[ArgumentsAsString]: {e.Command.ArgumentsAsString}");
-			//Console.WriteLine($"[ArgumentsAsList.Count]: {e.Command.ArgumentsAsList.Count}");
 		}
 
+		private void DropBrick(OnChatCommandReceivedArgs commandArgs)
+		{
+
+			if (commandArgs.Command.ChatMessage.IsBroadcaster || commandArgs.Command.ChatMessage.IsModerator)
+			{
+				if (commandArgs.Command.ArgumentsAsList.Count > 0)
+				{
+					if (int.TryParse(commandArgs.Command.ArgumentsAsList[0], out var numberOfBricksDropped))
+						_BricksDroped += numberOfBricksDropped;
+				}
+				else
+					_BricksDroped++;
+			}
+
+			twitchClient.SendMessage(Settings.ChannelName, $"Chad has dropped {_BricksDroped} {(_BricksDroped == 1 ? "brick" : "bricks")} so far this stream.");
+
+		}
+
+		private void Oof(OnChatCommandReceivedArgs commandArgs)
+		{
+
+			if (commandArgs.Command.ChatMessage.IsBroadcaster || commandArgs.Command.ChatMessage.IsModerator)
+				_Oofs++;
+
+			twitchClient.SendMessage(Settings.ChannelName, $"Chad has had {_Oofs} {(_Oofs == 1 ? "oof" : "oofs")} so far this stream.");
+
+		}
+
+		private void Stats()
+		{
+			twitchClient.SendMessage(Settings.ChannelName, $"Chad has dropped {_BricksDroped} {(_BricksDroped == 1 ? "brick" : "bricks")} and had {_Oofs} {(_Oofs == 1 ? "oof" : "oofs")} so far this stream.");
+		}
+
+
 	}
+
 }

@@ -11,9 +11,12 @@ namespace TwitchBot
 			//Console.ReadLine();
 			//bot.Discconect();
 
-			LiveMonitor liveMonitor = new LiveMonitor();
-			Console.ReadLine();
-			liveMonitor.StopMonitoring();
+			//LiveMonitor liveMonitor = new LiveMonitor();
+			//Console.ReadLine();
+			//liveMonitor.StopMonitoring();
+
+
+			TableSearch.PerformSearch();
 
 		}
 	}

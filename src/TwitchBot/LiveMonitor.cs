@@ -22,17 +22,9 @@ namespace TwitchBot
 
 		public LiveMonitor()
 		{
-
-
-			// Construct a new <see cref="TableClient" /> using a <see cref="TableSharedKeyCredential" />.
-
 			tableClient = new TableClient(new Uri(Settings.StorageUri),
 					"StreamSnapshot",
 					new TableSharedKeyCredential(Settings.StorageAccountName, Settings.StroageAccountKey));
-
-			// Create the table in the service.
-			//tableClient.Create();
-
 
 			Task.Run(() => ConfigLiveMonitorAsync());
 		}
@@ -44,8 +36,6 @@ namespace TwitchBot
 
 		private async Task ConfigLiveMonitorAsync()
 		{
-
-
 
 			API = new TwitchAPI();
 

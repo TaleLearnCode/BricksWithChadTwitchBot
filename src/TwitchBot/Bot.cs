@@ -71,9 +71,6 @@ namespace TwitchBot
 							_BricksDroped++;
 					}
 
-
-
-
 					twitchClient.SendMessage(Settings.ChannelName, $"Chad has dropped {_BricksDroped} bricks so far this stream.");
 					break;
 			}

@@ -12,9 +12,6 @@ namespace TwitchBot
 	public class Bot
 	{
 
-		// TODO: Adding console logging
-		// TODO: Add a RestProject stream message
-
 		// TwitchTokenGenerator.com
 		ConnectionCredentials credentials = new ConnectionCredentials(Settings.ChannelName, Settings.AccessToken);
 		TwitchClient twitchClient = new TwitchClient();
@@ -96,8 +93,8 @@ namespace TwitchBot
 				case "stats":
 					Stats();
 					break;
-				case "resetproject":
-					ResetProject(e);
+				case "setproject":
+					SetProject(e);
 					break;
 			}
 
@@ -146,7 +143,7 @@ namespace TwitchBot
 			twitchClient.SendMessage(Settings.ChannelName, $"Chad has dropped {_BricksDropped} {(_BricksDropped == 1 ? "brick" : "bricks")} and had {_Oofs} {(_Oofs == 1 ? "oof" : "oofs")} so far this stream.");
 		}
 
-		private void ResetProject(OnChatCommandReceivedArgs commandArgs)
+		private void SetProject(OnChatCommandReceivedArgs commandArgs)
 		{
 			if (commandArgs.Command.ChatMessage.IsBroadcaster || commandArgs.Command.ChatMessage.IsModerator)
 			{
@@ -158,6 +155,7 @@ namespace TwitchBot
 						_ProjectTracking = new ProjectTracking(Settings.ChannelName, commandArgs.Command.ArgumentsAsString);
 						_ProjectTracking.Save();
 					}
+					twitchClient.SendMessage(Settings.ChannelName, $"Now working on the {commandArgs.Command.ArgumentsAsString} project");
 				}
 			}
 		}

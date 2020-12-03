@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using TwitchLib.Client;
 using TwitchLib.Client.Events;
@@ -109,6 +110,8 @@ namespace TwitchBot
 
 			twitchClient.SendMessage(Settings.ChannelName, $"Chad has dropped {_BricksDropped} {(_BricksDropped == 1 ? "brick" : "bricks")} so far this stream.{(!string.IsNullOrWhiteSpace(_ProjectTracking.RowKey) ? $" During the {_ProjectTracking.RowKey} build, Chad has dropped {_ProjectTracking.BricksDropped} {(_ProjectTracking.BricksDropped == 1 ? "brick" : "bricks")}." : string.Empty)}");
 
+			UpdateLocalStats(Settings.BrickDropOutputPath, _BricksDropped);
+
 		}
 
 		private void Oof(OnChatCommandReceivedArgs commandArgs)
@@ -121,6 +124,9 @@ namespace TwitchBot
 			}
 
 			twitchClient.SendMessage(Settings.ChannelName, $"Chad has dropped {_Oofs} {(_Oofs == 1 ? "oof" : "oofs")} so far this stream.{(!string.IsNullOrWhiteSpace(_ProjectTracking.RowKey) ? $" During the {_ProjectTracking.RowKey} build, Chad has had {_ProjectTracking.Oofs} {(_ProjectTracking.Oofs == 1 ? "oof" : "oofs")}." : string.Empty)}");
+
+			UpdateLocalStats(Settings.OofOutputPath, _Oofs);
+
 		}
 
 		private void Stats()
@@ -148,6 +154,12 @@ namespace TwitchBot
 		{
 			_ProjectTracking.BricksDropped += bricksDropped;
 			_ProjectTracking.Oofs += oofs;
+		}
+
+		private void UpdateLocalStats(string path, int count)
+		{
+			using StreamWriter sw = File.CreateText(path);
+			sw.Write(count);
 		}
 
 	}

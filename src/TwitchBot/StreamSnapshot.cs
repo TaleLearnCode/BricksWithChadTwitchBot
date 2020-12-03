@@ -51,6 +51,9 @@ namespace TwitchBot
 		public static string GetMostRecentStreamId(string channelName)
 		{
 
+			throw new Exception("Did this work");
+
+
 			TableClient tableClient;
 			tableClient = new TableClient(new Uri(Settings.StorageUri),
 					"StreamSnapshot",

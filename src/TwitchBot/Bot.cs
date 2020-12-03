@@ -67,13 +67,23 @@ namespace TwitchBot
 		private void TwitchClient_OnChatCommandReceived(object sender, OnChatCommandReceivedArgs e)
 		{
 
-			var mostRecentStreamKey = StreamSnapshot.GetMostRecentStreamId("TaleLearnCode");
-			if (mostRecentStreamKey != _StreamKey)
+			try
 			{
-				_StreamKey = mostRecentStreamKey;
-				_BricksDropped = 0;
-				_Oofs = 0;
+				var mostRecentStreamKey = StreamSnapshot.GetMostRecentStreamId("TaleLearnCode");
+				if (mostRecentStreamKey != _StreamKey)
+				{
+					_StreamKey = mostRecentStreamKey;
+					_BricksDropped = 0;
+					_Oofs = 0;
+				}
 			}
+			catch (Exception ex)
+			{
+				PrintException("GetMostRecentStreamId", ex);
+			}
+
+
+			PrintChatMessageToConsole(e.Command.ChatMessage);
 
 			switch (e.Command.CommandText.ToLower())
 			{
@@ -90,6 +100,8 @@ namespace TwitchBot
 					ResetProject(e);
 					break;
 			}
+
+			PrintStats();
 
 			_ProjectTracking.Save();
 
@@ -160,6 +172,44 @@ namespace TwitchBot
 		{
 			using StreamWriter sw = File.CreateText(path);
 			sw.Write(count);
+		}
+
+		private void PrintChatMessageToConsole(ChatMessage chatMessage)
+		{
+
+			ConsoleColor currentBackground = Console.BackgroundColor;
+			ConsoleColor currentForeground = Console.ForegroundColor;
+
+			Console.ForegroundColor = ConsoleColor.Cyan;
+			Console.Write(chatMessage.DisplayName);
+			Console.ForegroundColor = ConsoleColor.Gray;
+			Console.Write($": {chatMessage.Message}\n");
+
+			Console.ForegroundColor = currentForeground;
+			Console.BackgroundColor = currentBackground;
+
+		}
+
+		private void PrintStats()
+		{
+			Console.WriteLine($"\tBricks Dropped: {_BricksDropped}");
+			Console.WriteLine($"\tOofs: {_Oofs}");
+		}
+
+		private void PrintException(string operation, Exception ex)
+		{
+
+			ConsoleColor currentBackground = Console.BackgroundColor;
+			ConsoleColor currentForeground = Console.ForegroundColor;
+
+			Console.BackgroundColor = ConsoleColor.Red;
+			Console.ForegroundColor = ConsoleColor.White;
+
+			Console.WriteLine($"{operation}: {ex.Message}");
+
+			Console.ForegroundColor = currentForeground;
+			Console.BackgroundColor = currentBackground;
+
 		}
 
 	}

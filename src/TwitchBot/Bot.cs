@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Timers;
 using TwitchLib.Client;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
@@ -21,6 +22,9 @@ namespace TwitchBot
 		private string _StreamKey;
 		private ProjectTracking _ProjectTracking = new();
 
+		private Timer _BotTimer = default;
+		private int _BotTimerTotal;
+
 		internal void Connect(bool logEvents)
 		{
 
@@ -35,6 +39,8 @@ namespace TwitchBot
 
 			twitchClient.Connect();
 
+			SetBotTimer();
+
 		}
 
 		private void TwitchClient_OnDisconnected(object sender, OnDisconnectedEventArgs e)
@@ -47,6 +53,8 @@ namespace TwitchBot
 		internal void Disconnect()
 		{
 			twitchClient.Disconnect();
+			if (_BotTimer is not null)
+				_BotTimer.Dispose();
 		}
 
 		private void TwitchClient_OnLog(object sender, OnLogArgs e)
@@ -56,9 +64,7 @@ namespace TwitchBot
 
 		private void TwitchClient_OnConnected(object sender, OnConnectedArgs e)
 		{
-			Console.ForegroundColor = ConsoleColor.Green;
-			Console.WriteLine("Bot Connected");
-			Console.ForegroundColor = ConsoleColor.White;
+			PrintMessageToConsole("Bot Connected", ConsoleColor.Green, ConsoleColor.Black);
 		}
 
 		private void TwitchClient_OnChatCommandReceived(object sender, OnChatCommandReceivedArgs e)
@@ -188,6 +194,20 @@ namespace TwitchBot
 
 		}
 
+		private void PrintMessageToConsole(string message, ConsoleColor foregroundColor = ConsoleColor.White, ConsoleColor backgroundColor = ConsoleColor.Black)
+		{
+			ConsoleColor currentBackground = Console.BackgroundColor;
+			ConsoleColor currentForeground = Console.ForegroundColor;
+
+			Console.BackgroundColor = backgroundColor;
+			Console.ForegroundColor = foregroundColor;
+			Console.WriteLine(message);
+
+			Console.ForegroundColor = currentForeground;
+			Console.BackgroundColor = currentBackground;
+
+		}
+
 		private void PrintStats()
 		{
 			Console.WriteLine($"\tBricks Dropped: {_BricksDropped}");
@@ -210,6 +230,35 @@ namespace TwitchBot
 
 		}
 
+		private void SetBotTimer()
+		{
+			_BotTimer = new Timer(Settings.TimerInternval);
+			_BotTimer.Elapsed += OnBotTimerElapsed;
+			_BotTimer.AutoReset = true;
+			_BotTimer.Enabled = true;
+		}
+
+		private void OnBotTimerElapsed(object sender, ElapsedEventArgs e)
+		{
+
+			ConsoleColor foregroundColor = ConsoleColor.Blue;
+			ConsoleColor backgroundColor = ConsoleColor.Black;
+
+			_BotTimerTotal++;
+
+			if (_BotTimerTotal % Settings.ProjectReminderInterval == 0 && string.IsNullOrWhiteSpace(_ProjectTracking.RowKey))
+			{
+				twitchClient.SendMessage(Settings.ChannelName, $"Hey {Settings.ChannelName} don't forget to set the project that you are working on.");
+				PrintMessageToConsole($"Set Project Reminder {DateTime.Now.ToLongTimeString()}", foregroundColor, backgroundColor);
+			}
+
+			if (_BotTimerTotal % Settings.WaterReminderInterval == 0)
+			{
+				PrintMessageToConsole($"Water Reminder {DateTime.Now.ToLongTimeString()}", foregroundColor, backgroundColor);
+				twitchClient.SendMessage(Settings.ChannelName, $"Hey {Settings.ChannelName} don't forgot to drink some water!");
+			}
+
+		}
 	}
 
 }
